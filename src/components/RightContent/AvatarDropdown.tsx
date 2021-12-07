@@ -9,8 +9,12 @@ import { history, useModel } from "umi";
 import { stringify } from "querystring";
 import HeaderDropdown from "../HeaderDropdown";
 import styles from "./index.less";
-import { outLogin } from "@/services/ant-design-pro/api";
+// import { outLogin } from "@/services/ant-design-pro/api";
 import type { MenuInfo } from "rc-menu/lib/interface";
+import URL from '@/constants/url'
+import Storage from '@/constants/storage'
+
+
 
 export type GlobalHeaderRightProps = {
   menu?: boolean;
@@ -20,13 +24,13 @@ export type GlobalHeaderRightProps = {
  * 退出登录，并且将当前的 url 保存
  */
 const loginOut = async () => {
-  await outLogin();
+  // await outLogin();
   const { query = {}, search, pathname } = history.location;
   const { redirect } = query;
   // Note: There may be security issues, please note
-  if (window.location.pathname !== "/user/login" && !redirect) {
+  if (window.location.pathname !== URL.LOGIN_URL && !redirect) {
     history.replace({
-      pathname: "/user/login",
+      pathname: URL.LOGIN_URL,
       search: stringify({
         redirect: pathname + search,
       }),
@@ -41,6 +45,8 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu }) => {
     (event: MenuInfo) => {
       const { key } = event;
       if (key === "logout") {
+        localStorage.setItem(Storage.USER_INFO_KEY, "")
+        localStorage.setItem(Storage.TOKEN_KEY, "")
         setInitialState((s) => ({ ...s, currentUser: undefined }));
         loginOut();
         return;
@@ -68,7 +74,7 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu }) => {
 
   const { currentUser } = initialState;
 
-  if (!currentUser || !currentUser.name) {
+  if (!currentUser || !currentUser.user.userName) {
     return loading;
   }
 
@@ -100,10 +106,10 @@ const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu }) => {
         <Avatar
           size="small"
           className={styles.avatar}
-          src={currentUser.avatar}
+          src={currentUser.user.avatar || './icons/icon-128x128.png'}
           alt="avatar"
         />
-        <span className={`${styles.name} anticon`}>{currentUser.name}</span>
+        <span className={`${styles.name} anticon`}>{currentUser.user.userName}</span>
       </span>
     </HeaderDropdown>
   );

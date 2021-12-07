@@ -16,7 +16,7 @@ export default defineConfig({
   },
   layout: {
     // https://umijs.org/zh-CN/plugins/plugin-layout
-    locale: true,
+    locale:false,
     siderWidth: 208,
     ...defaultSettings,
   },
@@ -71,4 +71,7 @@ export default defineConfig({
   mfsu: {},
   webpack5: {},
   exportStatic: {},
+  define:{
+    SERVER_URL: process.env.SERVER_URL
+  }
 });

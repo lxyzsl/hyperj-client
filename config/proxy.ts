@@ -12,7 +12,7 @@ export default {
       // 要代理的地址
       target: "http://127.0.0.1:9090/",
       changeOrigin: true,
-      pathRewrite: { "^": "" },
+      pathRewrite: { "^/api": "" },
     },
   },
   test: {
