@@ -1,18 +1,23 @@
-import { getSystemUserList, setSystemStatus } from '@/services/system/user';
+import { getSystemUserList, remove, setSystemStatus } from '@/services/system/user';
 import { PageContainer } from '@ant-design/pro-layout'
 import ProTable, { ActionType, ProColumns } from '@ant-design/pro-table'
-import { message, Switch } from 'antd';
-import React, { useRef } from 'react'
+import {  message, Modal, Popconfirm, Space, Switch } from 'antd';
+import React, { useRef, useState } from 'react';
+import {Access} from 'umi';
 import Storage from '@/constants/storage'
+import { hasPerms } from '@/utils/permission';
 
 
 const SystemUserList:React.FC = () => {
 
     const actionRef = useRef<ActionType>();
 
+
+
     const reloadData = () =>{
         actionRef.current!.reload();
     }
+
 
      /**
      * 启用/停用
@@ -22,11 +27,24 @@ const SystemUserList:React.FC = () => {
     const changeEnabeld = async (userId: string,checked:boolean) =>{
         const status = checked ? "1" :"0"
         const result = await setSystemStatus(userId,status)
-            if(result.success){
+        if(result.success){
             actionRef.current!.reload();
             message.success("操作成功")
         }
     }
+
+    /**
+     * 删除
+     */
+    const handleRemoveOne = async (userId: string) => {
+        const hide = message.loading('正在删除');
+        const result = await remove(userId);
+        if(result.success){
+            hide();
+            message.success('删除成功');
+            actionRef.current?.reload();
+        }
+      };
 
 
     const columns: ProColumns<ApiResp.System.User.UserInterface>[] = [
@@ -42,8 +60,8 @@ const SystemUserList:React.FC = () => {
             valueType: 'text',
           },
         {
-            title: "用户昵称",
-            dataIndex: 'nickName',
+            title: "用户名",
+            dataIndex: 'userName',
             valueType: 'text',
         },
         {
@@ -60,23 +78,40 @@ const SystemUserList:React.FC = () => {
             
             },
             valueType: 'checkbox',
-            render:(_,entity)=>{
-                const currentUserStorage = localStorage.getItem(Storage.USER_INFO_KEY);
-                const currentUser = JSON.parse(currentUserStorage!) as ApiResp.Account.CurrentUserInterface;
-              return (
-                <Switch disabled={entity.root === "1" || entity.userId === currentUser.user.userId}  defaultChecked={entity.status==="1"}  onChange={(checked:boolean)=>changeEnabeld(entity.userId,checked)} size="small"/>
-              )
-            },
+            render:(_,entity)=>(
+                <Switch disabled={entity.root === "1" }  defaultChecked={entity.status==="1"}  onChange={(checked:boolean)=>changeEnabeld(entity.userId,checked)} size="small"/>
+            ),
             width: "sm"
         },
         {
             title: '操作',
             dataIndex: 'option',
-            width: '220px',
+            width: '180px',
             valueType: 'option',
-            render: (_, record) => [
-
-            ]}
+            render: (_, record) => {
+                return (
+                    <Space>
+                        <Access accessible={hasPerms("system:user:edit")  && record.root !== "1"}>
+                            <a key="edit" >编辑 </a>
+                        </Access>
+                        <Access accessible={hasPerms("system:user:remove") && record.root !== "1"}>
+                            <Popconfirm
+                                placement="topRight"
+                                title="确定删除该项吗？"
+                                onConfirm={()=>handleRemoveOne(record.userId)}
+                                okText="确认"
+                                cancelText="取消"
+                            >
+                                <a key="batchRemove" className="error-color" > 删除 </a>
+                            </Popconfirm>
+                        </Access>
+                        <Access accessible={hasPerms("system:user:resetPwd") && record.root !== "1"}>
+                            <a key="resetpwd" > 密码重置</a>
+                        </Access>
+                    </Space>
+                )
+            }
+        }
     ]
 
     return (
@@ -90,9 +125,7 @@ const SystemUserList:React.FC = () => {
                     columns={columns}
                     rowKey="userId"
                     request={getSystemUserList}
-                >
-                    
-                </ProTable>
+                />
             </div>
         </PageContainer> 
     )

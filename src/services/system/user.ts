@@ -14,3 +14,9 @@ export async function setSystemStatus(userId:string,status:"0"|"1"){
         method: 'PATCH',
     })
 }
+
+export async function remove(userId:string){
+    return await request<ApiResp.IBaseResp>(`system/user/${userId}`,{
+        method: 'DELETE',
+    })
+}

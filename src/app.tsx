@@ -8,8 +8,8 @@ import RightContent from "@/components/RightContent";
 import Footer from "@/components/Footer";
 // import { currentUser as queryCurrentUser } from "./services/ant-design-pro/api";
 import { BookOutlined, LinkOutlined } from "@ant-design/icons";
-import URL from './constants/url'
-import Storage from './constants/storage'
+import URL from '@/constants/url'
+import Storage from '@/constants/storage'
 import { message, notification } from "antd";
 import { getUserInfo ,getRouters} from "./services/account";
 
@@ -20,16 +20,20 @@ export const initialStateConfig = {
   loading: <PageLoading />,
 };
 
-/**
- * @see  https://umijs.org/zh-CN/plugins/plugin-initial-state
- * */
-export async function getInitialState(): Promise<{
+interface InitialStateData {
   settings?: Partial<LayoutSettings>;
   menuData?: MenuDataItem[]
   currentUser?: ApiResp.Account.CurrentUserInterface;
   fetchUserInfo?: () => Promise<ApiResp.Account.CurrentUserInterface | undefined>;
   fetchMenuData?: () => Promise<MenuDataItem[] | undefined>;
-}> {
+}
+
+
+/**
+ * @see  https://umijs.org/zh-CN/plugins/plugin-initial-state
+ * */
+export async function getInitialState(): Promise<InitialStateData> {
+  // 后去用户信息
   const fetchUserInfo = async () => {
     try {
       if(!localStorage.getItem(Storage.TOKEN_KEY)){
@@ -62,13 +66,19 @@ export async function getInitialState(): Promise<{
     return undefined;
   };
 
-  // // 获取菜单
+  // 获取菜单
   const fetchMenuData = async () =>{
     
     const menus = await getRouters()
     console.log(menus)
     return menus;
   }
+
+  // 检测权限
+  const hasPerms = ()=>{
+    return true
+  }
+  
   // 如果是登录页面，不执行
   if (history.location.pathname !== URL.LOGIN_URL) {
     const currentUser = await fetchUserInfo();
@@ -88,30 +98,24 @@ export async function getInitialState(): Promise<{
   };
 }
 
-interface InitialStateData {
-  settings?: Partial<LayoutSettings>;
-  currentUser?: ApiResp.Account.CurrentUserInterface;
-  fetchUserInfo?: () => Promise<ApiResp.Account.CurrentUserInterface | undefined>;
-  unreadMsgCount?: number; // 未读消息通知数
-}
 
-const onPageChange = (initialState: InitialStateData | undefined) => {
-  const { location } = history;
+// const onPageChange = (initialState: InitialStateData | undefined) => {
+//   const { location } = history;
 
-  // 忽略的页面
-  if(location.pathname === URL.LOGIN_URL){
-    return;
-  }
+//   // 忽略的页面
+//   if(location.pathname === URL.LOGIN_URL){
+//     return;
+//   }
 
-  if(!initialState?.currentUser){
-    // 如果没有登录，重定向到 login
-    history.push(URL.LOGIN_URL);
-  }
-  else{
+//   if(!initialState?.currentUser){
+//     // 如果没有登录，重定向到 login
+//     history.push(URL.LOGIN_URL);
+//   }
+//   else{
     
-  }
+//   }
   
-};
+// };
 
 // ProLayout 支持的api https://procomponents.ant.design/components/layout
 export const layout: RunTimeLayoutConfig = ({ initialState }) => {
@@ -122,7 +126,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState }) => {
       content: initialState?.currentUser?.user.userName,
     },
     footerRender: () => <Footer />,
-    onPageChange: () => { onPageChange(initialState) },
+    // onPageChange: () => { onPageChange(initialState) },
     links: isDev
       ? [
           <Link to="/umi/plugin/openapi" target="_blank">

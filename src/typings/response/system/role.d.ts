@@ -15,4 +15,7 @@ declare namespace ApiResp.System.Role {
         removed: string
    }
 
+   export interface RoleList extends ApiResp.ListResp {
+      data: RoleInterface[]
+  }
 }
